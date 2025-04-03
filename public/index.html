@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flappy Bird Game</title>
+  <style>
+    /* Base styling for a normal UI */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #70c5ce;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative;
+    }
+    .homepage {
+      width: 500px;
+      text-align: center;
+      position: relative;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+    /* Icon images */
+    #gmIcon, #boosterIcon {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+    }
+    #gmIcon {
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #boosterIcon {
+      top: 15px;
+      left: 15px;
+    }
+    /* Buttons */
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffcc00;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #ff9900;
+    }
+    /* Popup menus (VIP Shop, Booster, Settings) */
+    #vipShop, #boosterMenu, #settingsMenu {
+      width: 400px;
+      text-align: center;
+      background-color: #fff;
+      border: 2px solid #000;
+      padding: 20px;
+      border-radius: 10px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+    /* GM Menu with Tabs */
+    #gmMenu {
+      width: 400px;
+      text-align: center;
+      background-color: #fff;
+      border: 2px solid #000;
+      padding: 15px;
+      border-radius: 10px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, 0);
+      display: none;
+      z-index: 100;
+    }
+    /* Tabs styling */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    .tab-button {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #ffcc00;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .tab-button:hover {
+      background-color: #ff9900;
+    }
+    .tab-content, .gm-tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #boosterAmount {
+      width: 50px;
+      text-align: center;
+      margin: 0 10px;
+    }
+    /* VIP Shop – Birds Tab */
+    #Birds {
+      text-align: center;
+    }
+    #Birds .bird-option {
+      display: inline-block;
+      margin: 10px;
+    }
+    /* Use slightly smaller images for VIP birds */
+    #Birds img {
+      width: 150px;
+      height: auto;
+      border: 2px solid #000;
+      margin-bottom: 10px;
+    }
+    /* For Hyper and Super birds, use a different border (Super uses blue) */
+    #Birds .hyper-bird img {
+      width: 130px;
+      height: auto;
+      border: 2px solid red;
+      border-radius: 5px;
+    }
+    #Birds .super-bird img {
+      width: 130px;
+      height: auto;
+      border: 2px solid blue;
+      border-radius: 5px;
+    }
+    /* VIP Shop – Money Tab */
+    #Money {
+      text-align: center;
+    }
+    #Money .money-option {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #000;
+      border-radius: 5px;
+    }
+    #Money .money-option p {
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    /* Offer Tab styling */
+    #Offer img {
+      width: 200px;
+      height: auto;
+      border: 2px solid #000;
+      margin-bottom: 10px;
+    }
+    #Offer p {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+    /* VIP Notification for purchase messages */
+    #vipNotification {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 28px;
+      font-weight: bold;
+      color: gold;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    /* 2x Money Timer */
+    #doubleMoneyTimer {
+      font-size: 16px;
+      color: darkred;
+      margin-top: 5px;
+    }
+    /* Icon styling */
+    .icon {
+      vertical-align: middle;
+      width: 24px;
+      height: 24px;
+      margin-right: 5px;
+    }
+    .gcubeIcon {
+      vertical-align: middle;
+      width: 36px;
+      height: 36px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- VIP Notification -->
+  <div id="vipNotification"></div>
+  
+  <div class="homepage" id="homepage">
+    <h1>Flappy Bird</h1>
+    <img src="assets/gm.png" id="gmIcon" alt="GM Icon" />
+    <img src="assets/booster.png" id="boosterIcon" alt="Booster Icon" />
+    <p id="moneyDisplay">
+      <img src="assets/money.png" class="icon" alt="Money Icon" />Coins: 2749209
+    </p>
+    <p id="gcubesDisplay">
+      <img src="assets/gcube.png" class="gcubeIcon" alt="Gcube Icon" />Gcube: 2749209
+    </p>
+    <p id="boosters">Boosters: 0</p>
+    <button id="startButton">Start Game</button>
+    <button id="vipShopButton">VIP Shop</button>
+    <button id="settingsButton">Settings</button>
+    <!-- Save/Load Buttons -->
+    <button onclick="saveGame()">Save Game</button>
+    <button onclick="loadGame()">Load Game</button>
+    
+    <!-- GM Menu with Currency and Bird Tabs -->
+    <div id="gmMenu">
+      <div class="tabs">
+        <button class="tab-button" onclick="openGMTab('gmCurrency')">Currency</button>
+        <button class="tab-button" onclick="openGMTab('gmBird')">Bird</button>
+      </div>
+      <div id="gmCurrency" class="gm-tab-content">
+        <button id="addCoin1000">AddCoin1000</button>
+        <button id="addGcube1000">AddGcube1000</button>
+      </div>
+      <div id="gmBird" class="gm-tab-content" style="display: none;">
+        <button onclick="gmSelectBird('assets/bird1.png')">Bird:1 (VIP)</button>
+        <button onclick="gmSelectBird('assets/bird2.png')">Bird:2 (Hyper)</button>
+        <button onclick="gmSelectBird('super')">Bird:3 (Super)</button>
+      </div>
+      <button id="closeGMMenu">Close</button>
+    </div>
+    
+    <!-- VIP Shop Popup -->
+    <div id="vipShop">
+      <h2>VIP Shop</h2>
+      <div class="tabs">
+        <button class="tab-button" onclick="openTab('2xItems')">2x Items</button>
+        <button class="tab-button" onclick="openTab('Birds')">Birds</button>
+        <button class="tab-button" onclick="openTab('Money')">Money</button>
+        <button class="tab-button" onclick="openTab('Offer')">Offer</button>
+      </div>
+      <div id="2xItems" class="tab-content">
+        <button id="buy2xMoney">2x Money (499 Gcube)</button>
+      </div>
+      <div id="Birds" class="tab-content">
+        <div class="bird-option">
+          <img src="assets/bird1.png" alt="VIP Bird Skin" />
+          <br />
+          <button id="buyCoolBird">Cool Bird (999 Gcube)</button>
+        </div>
+        <div class="bird-option">
+          <img src="assets/bird2.png" alt="Hyper Bird" />
+          <br />
+          <button id="buyHyperBird">Hyper Bird (1299 Gcube)</button>
+        </div>
+        <div class="bird-option super-bird">
+          <img src="assets/bird3_1.png" alt="Super Bird" />
+          <br />
+          <button id="buySuperBird">Super Bird (2999 Gcube)</button>
+        </div>
+      </div>
+      <div id="Money" class="tab-content">
+        <div class="money-option">
+          <p>+5000 Money</p>
+          <p>Cost: 100 Gcube</p>
+          <button id="buyMoney5000">Buy</button>
+        </div>
+        <div class="money-option">
+          <p>+50,000 Money</p>
+          <p>Cost: 499 Gcube</p>
+          <button id="buyMoney50000">Buy</button>
+        </div>
+        <div class="money-option">
+          <p>+100,000 Money</p>
+          <p>Cost: 999 Gcube</p>
+          <button id="buyMoney100000">Buy</button>
+        </div>
+      </div>
+      <div id="Offer" class="tab-content">
+        <img src="assets/offer.png" alt="Offer Icon" />
+        <p>VIP Bird</p>
+        <p>10,000 Coins</p>
+        <p>100 Gcube</p>
+        <button id="buyOffer">Buy Offer (1499 Gcube)</button>
+      </div>
+      <button id="closeVIPShop">Close</button>
+    </div>
+    
+    <!-- Booster Menu Popup -->
+    <div id="boosterMenu">
+      <h2>Booster Menu</h2>
+      <img src="assets/booster.png" alt="Booster Icon" />
+      <p>Max Boosters: 5</p>
+      <button id="decreaseBooster">-</button>
+      <input type="number" id="boosterAmount" value="1" min="1" max="5" readonly />
+      <button id="increaseBooster">+</button>
+      <button id="buyBooster">Buy Booster (15 Coins)</button>
+      <button id="closeBoosterMenu">Close</button>
+    </div>
+    
+    <!-- Settings Menu Popup -->
+    <div id="settingsMenu">
+      <h2>Settings</h2>
+      <div>
+        <label for="speedInput">Bird Speed:</label>
+        <input type="number" id="speedInput" value="2" step="0.1" />
+      </div>
+      <div>
+        <label for="jumpInput">Bird Jump (Lift):</label>
+        <input type="number" id="jumpInput" value="-4.5" step="0.1" />
+      </div>
+      <div>
+        <label for="gravityInput">Gravity:</label>
+        <input type="number" id="gravityInput" value="0.25" step="0.05" />
+      </div>
+      <button id="applySettings">Apply</button>
+      <button id="closeSettingsMenu">Close</button>
+    </div>
+  </div>
+  
+  <canvas id="gameCanvas" width="320" height="480" style="display: none;"></canvas>
+  
+  <script>
+    let coins = 2749209,
+        gcubes = 2749209,
+        boosters = 0,
+        maxBoosters = 5;
+    let selectedBirdColor = 'rgb';
+    let selectedBirdSkin = ""; // default means default bird
+    let gameInterval;
+    let doubleCoins = false,
+        boosterActive = false,
+        boosterCooldown = false;
+    let doubleMoneyActive = false,
+        doubleMoneyTime = 0;
+    let defaultBirdSpeed = 2,
+        defaultBirdLift = -4.5,
+        defaultGravity = 0.25;
+    
+    // Purchased flags for VIP birds
+    let purchasedVIP = false,
+        purchasedHyper = false,
+        purchasedSuper = false;
+    
+    // GM Menu functions
+    function openGMTab(tabName) {
+      let tabs = document.getElementsByClassName("gm-tab-content");
+      for (let i = 0; i < tabs.length; i++) { tabs[i].style.display = "none"; }
+      document.getElementById(tabName).style.display = "block";
+    }
+    
+    // Main UI Listeners
+    document.getElementById('startButton').addEventListener('click', function() {
+      document.getElementById('homepage').style.display = 'none';
+      document.getElementById('gameCanvas').style.display = 'block';
+      startGame();
+    });
+    document.getElementById('vipShopButton').addEventListener('click', function() {
+      document.getElementById('vipShop').style.display = 'block';
+    });
+    document.getElementById('closeVIPShop').addEventListener('click', function() {
+      document.getElementById('vipShop').style.display = 'none';
+    });
+    
+    // GM Menu Listeners
+    document.getElementById('gmIcon').addEventListener('click', function() {
+      document.getElementById('gmMenu').style.display = 'block';
+      openGMTab('gmCurrency');
+    });
+    document.getElementById('closeGMMenu').addEventListener('click', function() {
+      document.getElementById('gmMenu').style.display = 'none';
+    });
+    document.getElementById('addCoin1000').addEventListener('click', function() {
+      coins += 1000;
+      updateCoinsDisplay();
+    });
+    document.getElementById('addGcube1000').addEventListener('click', function() {
+      gcubes += 1000;
+      updateCoinsDisplay();
+    });
+    function gmSelectBird(asset) {
+      if (asset === "super") {
+        selectedBirdSkin = [
+          "assets/bird3_1.png",
+          "assets/bird3_2.png",
+          "assets/bird3_3.png",
+          "assets/bird3_4.png",
+          "assets/bird3_5.png"
+        ];
+      } else {
+        selectedBirdSkin = asset;
+      }
+      updateCoinsDisplay();
+      showVipNotification("GM Added Bird");
+    }
+    
+    // VIP Shop – 2x Money Button
+    document.getElementById('buy2xMoney').addEventListener('click', function() {
+      if (gcubes >= 499) {
+        gcubes -= 499;
+        doubleCoins = true;
+        updateCoinsDisplay();
+        showVipNotification("2x Money");
+      } else {
+        alert("Not enough Gcube!");
+      }
+    });
+    
+    // VIP Shop – Bird Purchases
+    document.getElementById('buyCoolBird').addEventListener('click', function() {
+      if (gcubes >= 999) {
+        gcubes -= 999;
+        selectedBirdSkin = "assets/bird1.png";
+        purchasedVIP = true;
+        updateCoinsDisplay();
+        showVipNotification("Obtained: VIP Bird");
+        this.innerText = "Purchased";
+        this.disabled = true;
+      } else {
+        alert("Not enough Gcube!");
+      }
+    });
+    document.getElementById('buyHyperBird').addEventListener('click', function() {
+      if (gcubes >= 1299) {
+        gcubes -= 1299;
+        selectedBirdSkin = "assets/bird2.png";
+        purchasedHyper = true;
+        updateCoinsDisplay();
+        showVipNotification("Obtained: Hyper Bird");
+        this.innerText = "Purchased";
+        this.disabled = true;
+      } else {
+        alert("Not enough Gcube!");
+      }
+    });
+    document.getElementById('buySuperBird').addEventListener('click', function() {
+      if (gcubes >= 2999) {
+        gcubes -= 2999;
+        selectedBirdSkin = [
+          "assets/bird3_1.png",
+          "assets/bird3_2.png",
+          "assets/bird3_3.png",
+          "assets/bird3_4.png",
+          "assets/bird3_5.png"
+        ];
+        purchasedSuper = true;
+        updateCoinsDisplay();
+        showVipNotification("Obtained: Super Bird");
+        this.innerText = "Purchased";
+        this.disabled = true;
+      } else {
+        alert("Not enough Gcube!");
+      }
+    });
+    
+    // VIP Shop – Money Tab Listeners
+    document.getElementById('buyMoney5000').addEventListener('click', function() {
+      if (gcubes < 100) { alert("Not enough Gcube!"); return; }
+      gcubes -= 100;
+      coins += 5000;
+      updateCoinsDisplay();
+      showVipNotification("Money +5000");
+    });
+    document.getElementById('buyMoney50000').addEventListener('click', function() {
+      if (gcubes < 499) { alert("Not enough Gcube!"); return; }
+      gcubes -= 499;
+      coins += 50000;
+      updateCoinsDisplay();
+      showVipNotification("Money +50k");
+    });
+    document.getElementById('buyMoney100000').addEventListener('click', function() {
+      if (gcubes < 999) { alert("Not enough Gcube!"); return; }
+      gcubes -= 999;
+      coins += 100000;
+      updateCoinsDisplay();
+      showVipNotification("Money +100k");
+    });
+    
+    // VIP Shop – Offer Tab Listener
+    document.getElementById('buyOffer').addEventListener('click', function() {
+      if (gcubes < 1499) { alert("Not enough Gcube!"); return; }
+      gcubes -= 1499;
+      coins += 10000;
+      gcubes += 100;
+      selectedBirdSkin = "assets/bird1.png";
+      purchasedVIP = true;
+      updateCoinsDisplay();
+      const notif = document.getElementById('vipNotification');
+      notif.innerText = "Obtained: VIP Bird, 10k Coins, 100 Gcube";
+      notif.style.display = "block";
+      notif.style.opacity = "1";
+      setTimeout(() => {
+        notif.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+        notif.style.opacity = "0";
+        notif.style.transform = "translate(-50%, -50px)";
+        setTimeout(() => {
+          notif.style.display = "none";
+          notif.style.transition = "";
+          notif.style.transform = "translate(-50%, 0)";
+        }, 500);
+      }, 3000);
+      this.innerText = "Purchased";
+      this.disabled = true;
+    });
+    
+    // Booster Menu Listeners
+    document.getElementById('boosterIcon').addEventListener('click', function() {
+      document.getElementById('boosterMenu').style.display = 'block';
+    });
+    document.getElementById('closeBoosterMenu').addEventListener('click', function() {
+      document.getElementById('boosterMenu').style.display = 'none';
+    });
+    document.getElementById('increaseBooster').addEventListener('click', function() {
+      const boosterAmount = document.getElementById('boosterAmount');
+      if (parseInt(boosterAmount.value) < maxBoosters) {
+        boosterAmount.value = parseInt(boosterAmount.value) + 1;
+      }
+    });
+    document.getElementById('decreaseBooster').addEventListener('click', function() {
+      const boosterAmount = document.getElementById('boosterAmount');
+      if (parseInt(boosterAmount.value) > 1) {
+        boosterAmount.value = parseInt(boosterAmount.value) - 1;
+      }
+    });
+    document.getElementById('buyBooster').addEventListener('click', function() {
+      const boosterAmount = parseInt(document.getElementById('boosterAmount').value);
+      const totalCost = boosterAmount * 15;
+      if (boosters + boosterAmount <= maxBoosters && coins >= totalCost) {
+        boosters += boosterAmount;
+        coins -= totalCost;
+        updateCoinsDisplay();
+      } else if (boosters + boosterAmount > maxBoosters) {
+        alert('Maximum 5 boosters allowed');
+      } else {
+        alert('Not enough coins!');
+      }
+    });
+    
+    // Settings Menu Listeners
+    document.getElementById('settingsButton').addEventListener('click', function() {
+      document.getElementById('settingsMenu').style.display = 'block';
+    });
+    document.getElementById('closeSettingsMenu').addEventListener('click', function() {
+      document.getElementById('settingsMenu').style.display = 'none';
+    });
+    document.getElementById('applySettings').addEventListener('click', function() {
+      defaultBirdSpeed = parseFloat(document.getElementById('speedInput').value) || defaultBirdSpeed;
+      defaultBirdLift = parseFloat(document.getElementById('jumpInput').value) || defaultBirdLift;
+      defaultGravity = parseFloat(document.getElementById('gravityInput').value) || defaultGravity;
+      alert('Settings Applied!');
+      document.getElementById('settingsMenu').style.display = 'none';
+    });
+    
+    function updateCoinsDisplay() {
+      document.getElementById('moneyDisplay').innerHTML = '<img src="assets/money.png" class="icon" alt="Money Icon"> Coins: ' + coins;
+      document.getElementById('gcubesDisplay').innerHTML = '<img src="assets/gcube.png" class="gcubeIcon" alt="Gcube Icon"> Gcube: ' + gcubes;
+      document.getElementById('boosters').innerText = 'Boosters: ' + boosters;
+    }
+    
+    function openTab(tabName) {
+      let tabs = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabs.length; i++) { tabs[i].style.display = "none"; }
+      document.getElementById(tabName).style.display = "block";
+    }
+    
+    function showVipNotification(itemName) {
+      let audio = new Audio('assets/buy.mp3');
+      audio.play();
+      const notif = document.getElementById('vipNotification');
+      notif.innerText = `Obtained: ${itemName}`;
+      notif.style.top = '50%';
+      notif.style.display = 'block';
+      notif.style.opacity = '1';
+      notif.style.transform = 'translate(-50%, 0)';
+      setTimeout(() => {
+        notif.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out';
+        notif.style.transform = 'translate(-50%, -50px)';
+        notif.style.opacity = '0';
+        setTimeout(() => {
+          notif.style.display = 'none';
+          notif.style.transition = '';
+          notif.style.transform = 'translate(-50%, 0)';
+        }, 500);
+      }, 3000);
+    }
+    
+    function startGame() {
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      let birdWidth = (Array.isArray(selectedBirdSkin)) ? 40 : (selectedBirdSkin !== "" ? 40 : 20);
+      let birdHeight = (Array.isArray(selectedBirdSkin)) ? 40 : (selectedBirdSkin !== "" ? 40 : 20);
+      let bird = {
+        x: 50,
+        y: 150,
+        width: birdWidth,
+        height: birdHeight,
+        gravity: defaultGravity,
+        lift: defaultBirdLift,
+        velocity: 0,
+        speed: defaultBirdSpeed
+      };
+      let pipes = [];
+      let frame = 0;
+      let score = 0;
+      let gameStarted = false;
+      let earnedCoins = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (Array.isArray(selectedBirdSkin)) {
+          let frameIndex = Math.floor(frame / 10) % selectedBirdSkin.length;
+          let img = new Image();
+          img.src = selectedBirdSkin[frameIndex];
+          ctx.drawImage(img, bird.x, bird.y, bird.width, bird.height);
+        } else if (selectedBirdSkin !== "") {
+          let img = new Image();
+          img.src = selectedBirdSkin;
+          ctx.drawImage(img, bird.x, bird.y, bird.width, bird.height);
+        } else {
+          if (selectedBirdColor === 'rgb') {
+            const gradient = ctx.createLinearGradient(bird.x, bird.y, bird.x + bird.width, bird.y + bird.height);
+            gradient.addColorStop(0, 'red');
+            gradient.addColorStop(0.5, 'green');
+            gradient.addColorStop(1, 'blue');
+            ctx.fillStyle = gradient;
+          } else if (selectedBirdColor === 'cool') {
+            ctx.fillStyle = 'cyan';
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bird.x - 5, bird.y - 5, bird.width + 10, bird.height + 10);
+          } else {
+            ctx.fillStyle = selectedBirdColor;
+          }
+          ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+        }
+        ctx.fillStyle = 'green';
+        for (let i = 0; i < pipes.length; i++) {
+          ctx.fillRect(pipes[i].x, pipes[i].y, pipes[i].width, pipes[i].height);
+        }
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText('Score: ' + score, 10, 25);
+        if (doubleMoneyActive) {
+          ctx.font = '16px Arial';
+          ctx.fillStyle = 'darkred';
+          ctx.fillText('2x Money: ' + doubleMoneyTime.toFixed(1) + "s", 10, 45);
+        }
+        ctx.fillStyle = 'black';
+        ctx.font = '16px Arial';
+        ctx.fillText('Boosters: ' + boosters, canvas.width - 120, 25);
+      }
+      function update() {
+        if (gameStarted) {
+          bird.velocity += bird.gravity;
+          bird.y += bird.velocity;
+          if (bird.y + bird.height > canvas.height || bird.y < 0) { endGame(); }
+          if (frame % 100 === 0) {
+            let pipeHeight = Math.floor(Math.random() * (canvas.height - 200)) + 50;
+            pipes.push({ x: canvas.width, y: 0, width: 50, height: pipeHeight });
+            pipes.push({ x: canvas.width, y: pipeHeight + 100, width: 50, height: canvas.height - pipeHeight - 100 });
+          }
+          for (let i = 0; i < pipes.length; i++) {
+            pipes[i].x -= bird.speed;
+            if (pipes[i].x + pipes[i].width < 0) {
+              pipes.splice(i, 1);
+              score++;
+              let multiplier = (doubleCoins || doubleMoneyActive) ? 2 : 1;
+              let earned = 10 * multiplier;
+              coins += earned;
+              earnedCoins += earned;
+              updateCoinsDisplay();
+              i--;
+            }
+            if (bird.x < pipes[i].x + pipes[i].width &&
+                bird.x + bird.width > pipes[i].x &&
+                bird.y < pipes[i].y + pipes[i].height &&
+                bird.y + bird.height > pipes[i].y) {
+              endGame();
+              break;
+            }
+          }
+          if (doubleMoneyActive) {
+            doubleMoneyTime -= 1/60;
+            if (doubleMoneyTime <= 0) { doubleMoneyActive = false; doubleMoneyTime = 0; }
+          }
+          frame++;
+        }
+      }
+      function endGame() {
+        clearInterval(gameInterval);
+        document.getElementById('gameCanvas').style.display = 'none';
+        document.getElementById('homepage').style.display = 'block';
+        alert(`Game Over! You earned: ${earnedCoins} Coins${(doubleCoins || doubleMoneyActive) ? " (2x)" : ""}`);
+      }
+      function gameLoop() { draw(); update(); }
+      document.addEventListener('keydown', function(event) {
+        if (event.code === 'Space' && !gameStarted) { gameStarted = true; }
+        if (event.code === 'Space') { bird.velocity = bird.lift; }
+        if (event.code === 'KeyB' && boosters > 0 && !boosterCooldown) {
+          boosters--;
+          boosterActive = true;
+          boosterCooldown = true;
+          bird.speed = 4;
+          updateCoinsDisplay();
+          setTimeout(() => { boosterActive = false; bird.speed = defaultBirdSpeed; }, 5000);
+          setTimeout(() => { boosterCooldown = false; }, 15000);
+        }
+      });
+      canvas.addEventListener('click', function() {
+        if (!gameStarted) { gameStarted = true; }
+        bird.velocity = bird.lift;
+      });
+      gameInterval = setInterval(gameLoop, 1000 / 60);
+    }
+    
+    // Save Game to the Node.js server
+    async function saveGame() {
+      const gameData = {
+        username: 'playerUsername',
+        coins: coins,
+        gcubes: gcubes,
+        boosters: boosters,
+        selectedBirdColor: selectedBirdColor,
+        selectedBirdSkin: selectedBirdSkin,
+        purchasedVIP: purchasedVIP,
+        purchasedHyper: purchasedHyper,
+        purchasedSuper: purchasedSuper,
+        // Include additional fields as needed
+      };
+      try {
+        const response = await fetch('http://localhost:5000/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(gameData),
+        });
+        const data = await response.json();
+        alert(data.message);
+      } catch (error) {
+        console.error('Error saving game data:', error);
+      }
+    }
+    
+    // Load Game from the Node.js server
+    async function loadGame() {
+      const username = 'playerUsername';
+      try {
+        const response = await fetch(`http://localhost:5000/load/${username}`);
+        const data = await response.json();
+        if (data) {
+          coins = data.coins;
+          gcubes = data.gcubes;
+          boosters = data.boosters;
+          selectedBirdColor = data.selectedBirdColor;
+          selectedBirdSkin = data.selectedBirdSkin || '';
+          purchasedVIP = data.purchasedVIP;
+          purchasedHyper = data.purchasedHyper;
+          purchasedSuper = data.purchasedSuper;
+          updateCoinsDisplay();
+          alert("Game Loaded Successfully!");
+        }
+      } catch (error) {
+        console.error('Error loading game data:', error);
+      }
+    }
+  </script>
+</body>
+  </html>
